@@ -3,9 +3,8 @@ from django.dispatch import receiver
 
 from robots.models import Robot
 from .models import Order
-from .services import (find_model_in_stock, update_stocks,
-                       get_pending_orders, send_email_notification,
-                       )
+from .services import find_model_in_stock, update_stocks, get_pending_orders
+from .tasks import send_email_notification
 
 
 @receiver(post_save, sender=Order)
@@ -32,4 +31,4 @@ def send_appeared_in_stock_notification(sender, instance, created, **kwargs):
     if created:
         pending_orders = get_pending_orders()
         recipients = [order.customer.email for order in pending_orders if order.robot_serial == instance.serial]
-        send_email_notification(recipients, instance.model, instance.version)
+        send_email_notification.delay(recipients, instance.model, instance.version)
